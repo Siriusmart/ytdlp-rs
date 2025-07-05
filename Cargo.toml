@@ -1,6 +1,11 @@
 [package]
 name = "ytdlp-rs"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
+description = "The thinnest yt-dlp wrapper."
+repository = "https://github.com/siriusmart/ytdlp-rs"
+license = "AGPL-3.0-or-later"
+keywords = [ "yt-dlp", "youtube" ]
+categories = [ "api-bindings" ]
 
 [dependencies]
