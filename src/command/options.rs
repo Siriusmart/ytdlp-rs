@@ -102,7 +102,20 @@ impl Builder {
         self
     }
 
-    /// Do not extract the videos of a playlist, only list them
+    /// Path to an additional directory to search for plugins. This option can be used multiple times to add multiple directories. Use "default" to search the default plugin directories (default)
+    pub fn plugin_dirs(&mut self, path: &str) -> &mut Self {
+        self.command_mut().arg("--plugin-dirs");
+        self.command_mut().arg(path);
+        self
+    }
+
+    /// Clear plugin directories to search, including defaults and those provided by previous --plugin-dirs
+    pub fn no_plugin_dirs(&mut self) -> &mut Self {
+        self.command_mut().arg("--no-plugin-dirs");
+        self
+    }
+
+    /// Do not extract a playlist's URL result entries; some entry metadata may be missing and downloading may be bypassed
     pub fn flat_playlist(&mut self) -> &mut Self {
         self.command_mut().arg("--flat-playlist");
         self
@@ -114,7 +127,7 @@ impl Builder {
         self
     }
 
-    /// Download livestreams from the start. Currently only supported for YouTube (Experimental)
+    /// Download livestreams from the start. Currently experimental and only supported for YouTube and Twitch
     pub fn live_from_start(&mut self) -> &mut Self {
         self.command_mut().arg("--live-from-start");
         self
@@ -158,10 +171,17 @@ impl Builder {
         self
     }
 
-    /// Options that can help keep compatibility with youtube-dl or youtube-dlc configurations by reverting some of the changes made in yt-dlp. See "Differences in default behavior" for details an alias starts with a dash "-", it is prefixed with "--". Arguments are parsed according to the Python string formatting mini-language. E.g. --alias get-audio,-X "-S=aext:{0},abr -x --audio-format {0}" creates options "--get-audio" and "-X" that takes an argument (ARG0) and expands to "-S=aext:ARG0,abr -x --audio-format ARG0". All defined aliases are listed in the --help output. Alias options can trigger more aliases; so be careful to avoid defining recursive options. As a safety measure, each alias may be triggered a maximum of 100 times. This option can be used multiple times
+    /// Options that can help keep compatibility with youtube-dl or youtube-dlc configurations by reverting some of the changes made in yt-dlp. See "Differences in default behavior" for details an alias starts with a dash "-", it is prefixed with "--". Arguments are parsed according to the Python string formatting mini-language. E.g. --alias get-audio,-X "-S aext:{0},abr -x --audio-format {0}" creates options "--get-audio" and "-X" that takes an argument (ARG0) and expands to "-S aext:ARG0,abr -x --audio-format ARG0". All defined aliases are listed in the --help output. Alias options can trigger more aliases; so be careful to avoid defining recursive options. As a safety measure, each alias may be triggered a maximum of 100 times. This option can be used multiple times
     pub fn compat_options(&mut self, opts: &str) -> &mut Self {
         self.command_mut().arg("--compat-options");
         self.command_mut().arg(opts);
+        self
+    }
+
+    /// Applies a predefined set of options. e.g. --preset-alias mp3. The following presets are available: mp3, aac, mp4, mkv, sleep. See the "Preset Aliases" section at the end for more info. This option can be used multiple times
+    pub fn preset_alias(&mut self, preset: &str) -> &mut Self {
+        self.command_mut().arg("--preset-alias");
+        self.command_mut().arg(preset);
         self
     }
 }
@@ -262,28 +282,28 @@ impl Builder {
         self
     }
 
-    /// Download only videos uploaded on or before this date. The date formats accepted is the same as --date
+    /// Download only videos uploaded on or before this date. The date formats accepted are the same as --date
     pub fn datebefore(&mut self, date: &str) -> &mut Self {
         self.command_mut().arg("--datebefore");
         self.command_mut().arg(date);
         self
     }
 
-    /// Download only videos uploaded on or after this date. The date formats accepted is the same as --date
+    /// Download only videos uploaded on or after this date. The date formats accepted are the same as --date
     pub fn dateafter(&mut self, date: &str) -> &mut Self {
         self.command_mut().arg("--dateafter");
         self.command_mut().arg(date);
         self
     }
 
-    /// Generic video filter. Any "OUTPUT TEMPLATE" field can be compared with a number or a string using the operators defined in "Filtering Formats". You can also simply specify a field to match if the field is present, use "!field" to check if the field is not present, and "&" to check multiple conditions. Use a "\" to escape "&" or quotes if needed. If used multiple times, the filter matches if at least one of the conditions is met. E.g. --match-filter !is_live --match-filter "like_count>?100 & description~='(?i)\bcats \& dogs\b'" matches only videos that are not live OR those that have a like count more than 100 (or the like field is not available) and also has a description that contains the phrase "cats & dogs" (caseless). Use "--match-filter -" to interactively ask whether to download each video
+    /// Generic video filter. Any "OUTPUT TEMPLATE" field can be compared with a number or a string using the operators defined in "Filtering Formats". You can also simply specify a field to match if the field is present, use "!field" to check if the field is not present, and "&" to check multiple conditions. Use a "\" to escape "&" or quotes if needed. If used multiple times, the filter matches if at least one of the conditions is met. E.g. --match-filters !is_live --match-filters "like_count>?100 & description~='(?i)\bcats \& dogs\b'" matches only videos that are not live OR those that have a like count more than 100 (or the like field is not available) and also has a description that contains the phrase "cats & dogs" (caseless). Use "--match-filters -" to interactively ask whether to download each video
     pub fn match_filters(&mut self, filter: &str) -> &mut Self {
         self.command_mut().arg("--match-filters");
         self.command_mut().arg(filter);
         self
     }
 
-    /// Do not use any --match-filter (default)
+    /// Do not use any --match-filters (default)
     pub fn no_match_filters(&mut self) -> &mut Self {
         self.command_mut().arg("--no-match-filters");
         self
@@ -341,7 +361,7 @@ impl Builder {
         self
     }
 
-    /// Stop the download process when encountering a file that is in the archive
+    /// Stop the download process when encountering a file that is in the archive supplied with the --download-archive option
     pub fn break_on_existing(&mut self) -> &mut Self {
         self.command_mut().arg("--break-on-existing");
         self
@@ -353,7 +373,7 @@ impl Builder {
         self
     }
 
-    /// Alters --max-downloads, --break-on-existing, --break-match-filter, and autonumber to reset per input URL
+    /// Alters --max-downloads, --break-on-existing, --break-match-filters, and autonumber to reset per input URL
     pub fn break_per_input(&mut self) -> &mut Self {
         self.command_mut().arg("--break-per-input");
         self
@@ -586,7 +606,7 @@ impl Builder {
         self
     }
 
-    /// Make filenames Windows-compatible only if using Windows (default)
+    /// Sanitize filenames only minimally
     pub fn no_windows_filenames(&mut self) -> &mut Self {
         self.command_mut().arg("--no-windows-filenames");
         self
@@ -877,7 +897,7 @@ impl Builder {
         self
     }
 
-    /// FILE Append given template to the file. The values of WHEN and TEMPLATE are same as that of --print. FILE uses the same syntax as the output template. This option can be used multiple times
+    /// FILE Append given template to the file. The values of WHEN and TEMPLATE are the same as that of --print. FILE uses the same syntax as the output template. This option can be used multiple times
     pub fn print_to_file(&mut self, whentemplate: &str) -> &mut Self {
         self.command_mut().arg("--print-to-file");
         self.command_mut().arg(whentemplate);
@@ -890,7 +910,7 @@ impl Builder {
         self
     }
 
-    /// Quiet, but print JSON information for each url or infojson passed. Simulate unless --no-simulate is used. If the URL refers to a playlist, the whole playlist information is dumped in a single line
+    /// Quiet, but print JSON information for each URL or infojson passed. Simulate unless --no-simulate is used. If the URL refers to a playlist, the whole playlist information is dumped in a single line
     pub fn dump_single_json(&mut self) -> &mut Self {
         self.command_mut().arg("--dump-single-json");
         self
@@ -1083,7 +1103,7 @@ impl Builder {
         self
     }
 
-    /// Prefer video formats with free containers over non-free ones of same quality. Use with "-S ext" to strictly prefer free containers irrespective of quality
+    /// Prefer video formats with free containers over non-free ones of the same quality. Use with "-S ext" to strictly prefer free containers irrespective of quality
     pub fn prefer_free_formats(&mut self) -> &mut Self {
         self.command_mut().arg("--prefer-free-formats");
         self
@@ -1159,14 +1179,14 @@ impl Builder {
         self
     }
 
-    /// Subtitle format; accepts formats preference, e.g. "srt" or "ass/srt/best"
+    /// Subtitle format; accepts formats preference separated by "/", e.g. "srt" or "ass/srt/best"
     pub fn sub_format(&mut self, format: &str) -> &mut Self {
         self.command_mut().arg("--sub-format");
         self.command_mut().arg(format);
         self
     }
 
-    /// Languages of the subtitles to download (can be regex) or "all" separated by commas, e.g. --sub-langs "en.*,ja". You can prefix the language code with a "-" to exclude it from the requested languages, e.g. --sub-langs all,-live_chat. Use --list-subs for a list of available language tags
+    /// Languages of the subtitles to download (can be regex) or "all" separated by commas, e.g. --sub-langs "en.*,ja" (where "en.*" is a regex pattern that matches "en" followed by 0 or more of any character). You can prefix the language code with a "-" to exclude it from the requested languages, e.g. --sub- langs all,-live_chat. Use --list-subs for a list of available language tags
     pub fn sub_langs(&mut self, langs: &str) -> &mut Self {
         self.command_mut().arg("--sub-langs");
         self.command_mut().arg(langs);
@@ -1295,7 +1315,7 @@ impl Builder {
         self
     }
 
-    /// Remux the video into another container if necessary (currently supported: avi, flv, gif, mkv, mov, mp4, webm, aac, aiff, alac, flac, m4a, mka, mp3, ogg, opus, vorbis, wav). If target container does not support the video/audio codec, remuxing will fail. You can specify multiple rules; e.g. "aac>m4a/mov>mp4/mkv" will remux aac to m4a, mov to mp4 and anything else to mkv
+    /// Remux the video into another container if necessary (currently supported: avi, flv, gif, mkv, mov, mp4, webm, aac, aiff, alac, flac, m4a, mka, mp3, ogg, opus, vorbis, wav). If the target container does not support the video/audio codec, remuxing will fail. You can specify multiple rules; e.g. "aac>m4a/mov>mp4/mkv" will remux aac to m4a, mov to mp4 and anything else to mkv
     pub fn remux_video(&mut self, format: &str) -> &mut Self {
         self.command_mut().arg("--remux-video");
         self.command_mut().arg(format);
@@ -1414,20 +1434,20 @@ impl Builder {
         self
     }
 
-    /// Write metadata to the video file's xattrs (using dublin core and xdg standards)
+    /// Write metadata to the video file's xattrs (using Dublin Core and XDG standards)
     pub fn xattrs(&mut self) -> &mut Self {
         self.command_mut().arg("--xattrs");
         self
     }
 
-    /// Concatenate videos in a playlist. One of "never", "always", or "multi_video" (default; only when the videos form a single show). All the video files must have same codecs and number of streams to be concatable. The "pl_video:" prefix can be used with "--paths" and "--output" to set the output filename for the concatenated files. See "OUTPUT TEMPLATE" for details
+    /// Concatenate videos in a playlist. One of "never", "always", or "multi_video" (default; only when the videos form a single show). All the video files must have the same codecs and number of streams to be concatenable. The "pl_video:" prefix can be used with "--paths" and "--output" to set the output filename for the concatenated files. See "OUTPUT TEMPLATE" for details
     pub fn concat_playlist(&mut self, policy: &str) -> &mut Self {
         self.command_mut().arg("--concat-playlist");
         self.command_mut().arg(policy);
         self
     }
 
-    /// Automatically correct known faults of the file. One of never (do nothing), warn (only emit a warning), detect_or_warn (the default; fix file if we can, warn otherwise), force (try fixing even if file already exists)
+    /// Automatically correct known faults of the file. One of never (do nothing), warn (only emit a warning), detect_or_warn (the default; fix the file if we can, warn otherwise), force (try fixing even if the file already exists)
     pub fn fixup(&mut self, policy: &str) -> &mut Self {
         self.command_mut().arg("--fixup");
         self.command_mut().arg(policy);
@@ -1441,7 +1461,7 @@ impl Builder {
         self
     }
 
-    /// Execute a command, optionally prefixed with when to execute it, separated by a ":". Supported values of "WHEN" are the same as that of --use-postprocessor (default: after_move). Same syntax as the output template can be used to pass any field as arguments to the command. If no fields are passed, %(filepath,_filename|)q is appended to the end of the command. This option can be used multiple times
+    /// Execute a command, optionally prefixed with when to execute it, separated by a ":". Supported values of "WHEN" are the same as that of --use-postprocessor (default: after_move). The same syntax as the output template can be used to pass any field as arguments to the command. If no fields are passed, %(filepath,_filename|)q is appended to the end of the command. This option can be used multiple times
     pub fn exec(&mut self, whencmd: &str) -> &mut Self {
         self.command_mut().arg("--exec");
         self.command_mut().arg(whencmd);
@@ -1454,14 +1474,14 @@ impl Builder {
         self
     }
 
-    /// Convert the subtitles to another format (currently supported: ass, lrc, srt, vtt) (Alias: --convert-subtitles)
+    /// Convert the subtitles to another format (currently supported: ass, lrc, srt, vtt). Use "--convert-subs none" to disable conversion (default) (Alias: --convert- subtitles)
     pub fn convert_subs(&mut self, format: &str) -> &mut Self {
         self.command_mut().arg("--convert-subs");
         self.command_mut().arg(format);
         self
     }
 
-    /// Convert the thumbnails to another format (currently supported: jpg, png, webp). You can specify multiple rules using similar syntax as --remux-video
+    /// Convert the thumbnails to another format (currently supported: jpg, png, webp). You can specify multiple rules using similar syntax as "--remux-video". Use "--convert- thumbnails none" to disable conversion (default)
     pub fn convert_thumbnails(&mut self, format: &str) -> &mut Self {
         self.command_mut().arg("--convert-thumbnails");
         self.command_mut().arg(format);
@@ -1505,7 +1525,7 @@ impl Builder {
         self
     }
 
-    ///  The (case sensitive) name of plugin postprocessors to be enabled, and (optionally) arguments to be passed to it, separated by a colon ":". ARGS are a semicolon ";" delimited list of NAME=VALUE. The "when" argument determines when the postprocessor is invoked. It can be one of "pre_process" (after video extraction), "after_filter" (after video passes filter), "video" (after --format; before --print/--output), "before_dl" (before each video download), "post_process" (after each video download; default), "after_move" (after moving video file to its final locations), "after_video" (after downloading and processing all formats of a video), or "playlist" (at end of playlist). This option can be used multiple times to add different postprocessors
+    ///  The (case-sensitive) name of plugin postprocessors to be enabled, and (optionally) arguments to be passed to it, separated by a colon ":". ARGS are a semicolon ";" delimited list of NAME=VALUE. The "when" argument determines when the postprocessor is invoked. It can be one of "pre_process" (after video extraction), "after_filter" (after video passes filter), "video" (after --format; before --print/--output), "before_dl" (before each video download), "post_process" (after each video download; default), "after_move" (after moving the video file to its final location), "after_video" (after downloading and processing all formats of a video), or "playlist" (at end of playlist). This option can be used multiple times to add different postprocessors
     pub fn use_postprocessor(&mut self, nameargs: &str) -> &mut Self {
         self.command_mut().arg("--use-postprocessor");
         self.command_mut().arg(nameargs);
@@ -1515,7 +1535,7 @@ impl Builder {
 
 /// SponsorBlock Options   
 impl Builder {
-    /// SponsorBlock categories to create chapters for, separated by commas. Available categories are sponsor, intro, outro, selfpromo, preview, filler, interaction, music_offtopic, poi_highlight, chapter, all and default (=all). You can prefix the category with a "-" to exclude it. See [1] for description of the categories. E.g. --sponsorblock-mark all,-preview [1] https:/ /wiki.sponsor.ajay.app/w/Segment_Categories
+    /// SponsorBlock categories to create chapters for, separated by commas. Available categories are sponsor, intro, outro, selfpromo, preview, filler, interaction, music_offtopic, poi_highlight, chapter, all and default (=all). You can prefix the category with a "-" to exclude it. See [1] for descriptions of the categories. E.g. --sponsorblock-mark all,-preview [1] https:/ /wiki.sponsor.ajay.app/w/Segment_Categories
     pub fn sponsorblock_mark(&mut self, cats: &str) -> &mut Self {
         self.command_mut().arg("--sponsorblock-mark");
         self.command_mut().arg(cats);
